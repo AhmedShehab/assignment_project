@@ -34,13 +34,10 @@ class MessageConsumer(AsyncWebsocketConsumer):
     def save_message(self, name, message):
         """Save the message to the database."""
         Message.objects.create(sender=name, content=message)
-        print(f"Message saved: {name}: {message}")
 
     async def broadcast_message(self, name, message):
         """Broadcast the received message to all connected WebSocket clients."""
-        print(f"Broadcasting message: {name}: {message}")
         for connection in self.active_connections:
-            print(f"Sending message to {connection}")  # Debugging line
             await connection.send(text_data=json.dumps({
                 'message': message,
                 'name': name,
