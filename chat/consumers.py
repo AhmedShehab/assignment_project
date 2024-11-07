@@ -2,7 +2,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from channels.db import database_sync_to_async
 from .models import Message
-from .utils import crop_message  # Import the crop_message function
+from .utils import sanitize_name, sanitize_message
 class MessageConsumer(AsyncWebsocketConsumer):
     # Store active WebSocket connections
     active_connections = []
@@ -24,14 +24,12 @@ class MessageConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         name = text_data_json['name']
 
-        # Crop the message if it exceeds 1024 characters
-        cropped_message = crop_message(message)
+        message = sanitize_message(message)
+        name = sanitize_name(name)
 
-        # Save the cropped message to the database
-        await self.save_message(name, cropped_message)
+        await self.save_message(name, message)
 
-        # Broadcast the cropped message to all active WebSocket clients
-        await self.broadcast_message(name, cropped_message)
+        await self.broadcast_message(name, message)
 
 
     @database_sync_to_async

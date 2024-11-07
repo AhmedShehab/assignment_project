@@ -1,13 +1,31 @@
-def crop_message(message):
-    """
-    Crop the message to a maximum of 1024 characters.
+import html
+import re
 
-    Args:
-    - message (str): The message to be cropped.
+def sanitize_name(name):
+    """Sanitize the username to prevent HTML, JS, and unwanted characters."""
+    # Strip leading/trailing spaces
+    name = name.strip()
+    
+    # Crop the name to max 50 letters
+    name = name[:50]
 
-    Returns:
-    - str: The cropped message if it exceeds 1024 characters, otherwise the original message.
-    """
-    if len(message) > 1024:
-        return message[:1024]  # Crop the message to the first 1024 characters
+    # Escape any HTML or special characters
+    name = html.escape(name)
+
+    # Remove non-alphanumeric characters (allow only letters, numbers, and spaces)
+    name = re.sub(r'[^a-zA-Z0-9 ]', '', name)
+
+    return name
+
+def sanitize_message(message):
+    """Sanitize the message to prevent HTML, JS, and unwanted characters, and crop to 1024 chars."""
+
+    # Strip leading/trailing spaces
+    message = message.strip()
+    # Crop the message to 1024 characters
+    message = message[:1024]
+    
+    # Remove any HTML tags (e.g., <b>, <script>, etc.)
+    message = html.escape(message)
+    
     return message
