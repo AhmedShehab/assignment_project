@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Chat</title>
+		<style>
+			/* Basic reset */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			/* Center the content vertically and horizontally */
+			body,
+			html {
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				font-family: Arial, sans-serif;
+				background-color: #f4f4f9;
+			}
+
+			.chat-container {
+				width: 350px;
+				max-width: 100%;
+				background-color: #ffffff;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			h1 {
+				text-align: center;
+				margin-bottom: 20px;
+				font-size: 24px;
+				color: #333;
+			}
+
+			#messages {
+				width: 100%;
+				height: 300px;
+				overflow-y: scroll;
+				border: 1px solid #ccc;
+				margin-bottom: 10px;
+				padding: 10px;
+				background-color: #f9f9f9;
+				border-radius: 4px;
+				font-size: 14px;
+				color: #333;
+			}
+
+			#message-input {
+				width: calc(100% - 90px);
+				padding: 10px;
+				font-size: 14px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				margin-right: 10px;
+			}
+
+			#send-button {
+				padding: 10px 20px;
+				font-size: 14px;
+				background-color: #4caf50;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			#send-button:hover {
+				background-color: #45a049;
+			}
+
+			.input-container {
+				display: flex;
+				align-items: center;
+				margin-top: 10px;
+			}
+
+			.message {
+				margin-bottom: 10px;
+			}
+
+			.message span {
+				font-weight: bold;
+			}
+
+			/* Scrollbar customization */
+			#messages::-webkit-scrollbar {
+				width: 6px;
+			}
+			#messages::-webkit-scrollbar-thumb {
+				background-color: #888;
+				border-radius: 3px;
+			}
+			#messages::-webkit-scrollbar-thumb:hover {
+				background-color: #555;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="chat-container">
+			<h1>Welcome to the Chat!</h1>
+
+			<div id="messages"></div>
+			<!-- Messages display area -->
+
+			<div class="input-container">
+				<input
+					type="text"
+					id="message-input"
+					placeholder="Type your message here" />
+				<button id="send-button">Send</button>
+			</div>
+		</div>
+
+		<script>
+			window.onload = function () {
+				let username = null;
+
+				// Check if username is already set (from session or a previous value)
+				if (!username) {
+					// Prompt the user for their name if not already set
+					username = prompt("Please enter your name:");
+					if (!username) {
+						alert("Username is required.");
+						return; // Stop execution if no username is provided
+					}
+				}
+
+				// Establish the WebSocket connection
+				const chatSocket = new WebSocket(
+					"ws://" + window.location.host + "/ws/messages/"
+				);
+
+				// When the WebSocket is connected
+				chatSocket.onopen = function () {
+					console.log("Connected to WebSocket");
+				};
+
+				// When a message is received from the server
+				chatSocket.onmessage = function (e) {
+					const data = JSON.parse(e.data);
+					const messageElement = document.createElement("div");
+					messageElement.classList.add("message");
+					messageElement.innerHTML = `<span>${data.name}:</span> ${data.message}`;
+					document
+						.getElementById("messages")
+						.appendChild(messageElement);
+					// Scroll to the bottom of the message area
+					const messagesDiv = document.getElementById("messages");
+					messagesDiv.scrollTop = messagesDiv.scrollHeight;
+				};
+
+				// When the WebSocket connection is closed
+				chatSocket.onclose = function (e) {
+					console.error("Chat socket closed unexpectedly");
+				};
+
+				// Sending the message when "Enter" is pressed
+				document
+					.getElementById("message-input")
+					.addEventListener("keypress", function (event) {
+						if (event.key === "Enter") {
+							sendMessage();
+						}
+					});
+
+				// Sending the message when "Send" button is clicked
+				document
+					.getElementById("send-button")
+					.addEventListener("click", function () {
+						sendMessage();
+					});
+
+				function sendMessage() {
+					const messageInput =
+						document.getElementById("message-input");
+					const message = messageInput.value.trim();
+					if (message) {
+						// Send the message to the WebSocket with the stored username
+						chatSocket.send(
+							JSON.stringify({
+								message: message,
+								name: username
+							})
+						);
+						messageInput.value = ""; // Clear the input after sending the message
+					}
+				}
+			};
+		</script>
+	</body>
+</html>
